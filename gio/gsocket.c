@@ -560,6 +560,11 @@ g_socket_details_from_fd (GSocket *socket)
         }
     }
 
+
+    #if defined(G_OS_HORIZON)
+      socket->priv->keepalive = FALSE;
+    #else
+
   if (g_socket_get_option (socket, SOL_SOCKET, SO_KEEPALIVE, &value, NULL))
     {
       socket->priv->keepalive = !!value;
@@ -569,6 +574,8 @@ g_socket_details_from_fd (GSocket *socket)
       /* Can't read, maybe not supported, assume FALSE */
       socket->priv->keepalive = FALSE;
     }
+
+    #endif
 
   return;
 
@@ -710,12 +717,14 @@ g_socket_constructed (GObject *object)
        * nonblocking automatically in certain operations. This way we make
        * things work the same on all platforms.
        */
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
       if (!g_unix_set_fd_nonblocking (socket->priv->fd, TRUE, &error))
         {
           g_warning ("Error setting socket nonblocking: %s", error->message);
           g_clear_error (&error);
         }
+#elif defined(G_OS_HORIZON)
+        // TODO: implement
 #else
       arg = TRUE;
 
@@ -1420,6 +1429,7 @@ g_socket_set_keepalive (GSocket  *socket,
   if (socket->priv->keepalive == keepalive)
     return;
 
+#if !defined(G_OS_HORIZON)
   if (!g_socket_set_option (socket, SOL_SOCKET, SO_KEEPALIVE,
 			    keepalive, &error))
     {
@@ -1427,6 +1437,7 @@ g_socket_set_keepalive (GSocket  *socket,
       g_error_free (error);
       return;
     }
+#endif
 
   socket->priv->keepalive = keepalive;
   g_object_notify (G_OBJECT (socket), "keepalive");
@@ -1583,11 +1594,15 @@ g_socket_get_ttl (GSocket *socket)
       g_socket_get_option (socket, IPPROTO_IP, IP_TTL,
 			   &value, &error);
     }
+
+#ifdef HAVE_IPV6
   else if (socket->priv->family == G_SOCKET_FAMILY_IPV6)
     {
       g_socket_get_option (socket, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
 			   &value, &error);
     }
+#endif
+
   else
     g_return_val_if_reached (0);
 
@@ -1628,8 +1643,13 @@ g_socket_set_ttl (GSocket  *socket,
     {
       g_socket_set_option (socket, IPPROTO_IP, IP_TTL,
 			   ttl, NULL);
+
+
+#ifdef HAVE_IPV6
       g_socket_set_option (socket, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
 			   ttl, &error);
+#endif
+
     }
   else
     g_return_if_reached ();
@@ -1732,11 +1752,15 @@ g_socket_get_multicast_loopback (GSocket *socket)
       g_socket_get_option (socket, IPPROTO_IP, IP_MULTICAST_LOOP,
 			   &value, &error);
     }
+
+#ifdef HAVE_IPV6
   else if (socket->priv->family == G_SOCKET_FAMILY_IPV6)
     {
       g_socket_get_option (socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-			   &value, &error);
+			   &value, &error); 
     }
+#endif
+
   else
     g_return_val_if_reached (FALSE);
 
@@ -1781,8 +1805,12 @@ g_socket_set_multicast_loopback (GSocket    *socket,
     {
       g_socket_set_option (socket, IPPROTO_IP, IP_MULTICAST_LOOP,
 			   loopback, NULL);
+
+#ifdef HAVE_IPV6
       g_socket_set_option (socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
 			   loopback, &error);
+#endif
+
     }
   else
     g_return_if_reached ();
@@ -1821,11 +1849,16 @@ g_socket_get_multicast_ttl (GSocket *socket)
       g_socket_get_option (socket, IPPROTO_IP, IP_MULTICAST_TTL,
 			   &value, &error);
     }
+
+
+#ifdef HAVE_IPV6
   else if (socket->priv->family == G_SOCKET_FAMILY_IPV6)
     {
       g_socket_get_option (socket, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 			   &value, &error);
     }
+#endif
+
   else
     g_return_val_if_reached (FALSE);
 
@@ -1867,8 +1900,13 @@ g_socket_set_multicast_ttl (GSocket  *socket,
     {
       g_socket_set_option (socket, IPPROTO_IP, IP_MULTICAST_TTL,
 			   ttl, NULL);
+
+
+#ifdef HAVE_IPV6
       g_socket_set_option (socket, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 			   ttl, &error);
+#endif
+
     }
   else
     g_return_if_reached ();
@@ -2393,6 +2431,8 @@ g_socket_multicast_group_operation (GSocket       *socket,
       result = setsockopt (socket->priv->fd, IPPROTO_IP, optname,
 			   &mc_req, sizeof (mc_req));
     }
+
+#ifdef HAVE_IPV6
   else if (g_inet_address_get_family (group) == G_SOCKET_FAMILY_IPV6)
     {
       struct ipv6_mreq mc_req_ipv6;
@@ -2410,6 +2450,8 @@ g_socket_multicast_group_operation (GSocket       *socket,
       result = setsockopt (socket->priv->fd, IPPROTO_IPV6, optname,
 			   &mc_req_ipv6, sizeof (mc_req_ipv6));
     }
+#endif
+
   else
     g_return_val_if_reached (FALSE);
 
@@ -2625,6 +2667,8 @@ g_socket_multicast_group_operation_ssm (GSocket       *socket,
       }
       break;
 
+
+#ifdef HAVE_IPV6
     case G_SOCKET_FAMILY_IPV6:
       {
 #ifdef MCAST_JOIN_SOURCE_GROUP
@@ -2681,6 +2725,8 @@ g_socket_multicast_group_operation_ssm (GSocket       *socket,
         return FALSE;
 #endif  /* MCAST_JOIN_SOURCE_GROUP */
       }
+
+#endif
       break;
 
     default:
@@ -2799,6 +2845,8 @@ g_socket_speaks_ipv4 (GSocket *socket)
     case G_SOCKET_FAMILY_IPV4:
       return TRUE;
 
+
+#ifdef HAVE_IPV6
     case G_SOCKET_FAMILY_IPV6:
 #if defined (IPPROTO_IPV6) && defined (IPV6_V6ONLY)
       {
@@ -2813,6 +2861,7 @@ g_socket_speaks_ipv4 (GSocket *socket)
       }
 #else
       return FALSE;
+#endif
 #endif
 
     default:
@@ -3153,6 +3202,8 @@ g_socket_get_available_bytes (GSocket *socket)
     {
 #ifdef G_OS_WIN32
       if (ioctlsocket (socket->priv->fd, FIONREAD, &avail) < 0)
+#elif defined(G_OS_HORIZON)
+        // TODO: implement
 #else
       if (ioctl (socket->priv->fd, FIONREAD, &avail) < 0)
 #endif
@@ -3998,6 +4049,9 @@ socket_source_dispatch (GSource     *source,
 
 #ifdef G_OS_WIN32
   events = update_condition (socket_source->socket);
+#elif defined(G_OS_HORIZON)
+  // TODO: implement
+
 #else
   if (g_socket_is_closed (socket_source->socket))
     {
@@ -4130,12 +4184,15 @@ socket_source_new (GSocket      *socket,
       g_source_unref (cancellable_source);
     }
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
   add_condition_watch (socket, &socket_source->condition);
   socket_source->pollfd.fd = (gintptr) socket->priv->event;
   socket_source->pollfd.events = condition;
   socket_source->pollfd.revents = 0;
   g_source_add_poll (source, &socket_source->pollfd);
+
+#elif defined(G_OS_HORIZON)
+  // TODO: imeplement
 #else
   socket_source->fd_tag = g_source_add_unix_fd (source, socket->priv->fd, condition);
 #endif
@@ -4484,7 +4541,7 @@ g_socket_condition_timed_wait (GSocket       *socket,
   #endif
 }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 
 #ifdef HAVE_QNX
 /* QNX has this weird upper limit, or at least used to back in the 6.x days.
@@ -4954,7 +5011,7 @@ g_socket_send_message_with_timeout (GSocket                *socket,
       vectors = &one_vector;
     }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   {
     GOutputMessage output_message;
     struct msghdr msg;
@@ -5011,7 +5068,7 @@ g_socket_send_message_with_timeout (GSocket                *socket,
 
     return G_POLLABLE_RETURN_OK;
   }
-#else
+#elif defined(G_OS_WIN32)
   {
     struct sockaddr_storage addr;
     guint addrlen;
@@ -5095,6 +5152,8 @@ g_socket_send_message_with_timeout (GSocket                *socket,
       *bytes_written = bytes_sent;
     return G_POLLABLE_RETURN_OK;
   }
+#elif defined(G_OS_HORIZON)
+  // TODO: implement
 #endif
 }
 
@@ -5441,7 +5500,7 @@ g_socket_receive_message_with_timeout (GSocket                 *socket,
       vectors = &one_vector;
     }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   {
     GInputMessage input_message;
     struct msghdr msg;
@@ -5509,7 +5568,7 @@ g_socket_receive_message_with_timeout (GSocket                 *socket,
 
     return result;
   }
-#else
+#elif defined(G_OS_WIN32)
   {
     struct sockaddr_storage addr;
     int addrlen;
@@ -5596,6 +5655,9 @@ g_socket_receive_message_with_timeout (GSocket                 *socket,
 
     return bytes_received;
   }
+
+#elif defined(G_OS_HORIZON)
+  // TODO: implement
 #endif
 }
 

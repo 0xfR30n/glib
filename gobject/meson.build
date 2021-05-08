@@ -125,7 +125,7 @@ libgobject = library('gobject-2.0',
   darwin_versions : darwin_versions,
   install : true,
   include_directories : [configinc],
-  dependencies : [libffi_dep, libglib_dep],
+  dependencies : [libffi_dep, libglib_dep] + horizon_deps,
   c_args : ['-DG_LOG_DOMAIN="GLib-GObject"', '-DGOBJECT_COMPILATION'] + glib_hidden_visibility_args,
   link_args : glib_link_flags,
 )
@@ -141,15 +141,19 @@ pkg.generate(libgobject,
 
 libgobject_dep = declare_dependency(link_with : libgobject,
   include_directories : [gobjectinc],
-  dependencies : [libglib_dep, glib_enumtypes_dep])
+  dependencies : [libglib_dep, glib_enumtypes_dep, horizon_deps])
 
 if meson.version().version_compare('>=0.54.0')
   meson.override_dependency('gobject-2.0', libgobject_dep)
 endif
 
+if host_system != 'horizon'
+
 executable('gobject-query', 'gobject-query.c',
   install : true,
   dependencies : [libglib_dep, libgobject_dep])
+
+endif
 
 install_data('gobject_gdb.py', install_dir : join_paths(glib_pkgdatadir, 'gdb'))
 gdb_conf = configuration_data()

@@ -44,6 +44,10 @@
 #include "dirent/dirent.h"
 #endif
 
+#if defined(G_OS_HORIZON)
+#include <sys/errno.h>
+#endif
+
 #include "glib-private.h" /* g_dir_open_with_errno, g_dir_new_from_dirp */
 
 /**
@@ -105,6 +109,9 @@ g_dir_open_with_errno (const gchar *path,
 
   if (dir.wdirp == NULL)
     return NULL;
+
+#elif defined(G_OS_HORIZON)
+  // TODO:
 #else
   dir.dirp = opendir (path);
 
@@ -222,6 +229,9 @@ g_dir_read_name (GDir *dir)
 #ifdef G_OS_WIN32
   gchar *utf8_name;
   struct _wdirent *wentry;
+
+#elif defined(G_OS_HORIZON)
+
 #else
   struct dirent *entry;
 #endif
@@ -250,6 +260,9 @@ g_dir_read_name (GDir *dir)
 
       return dir->utf8_buf;
     }
+
+#elif defined(G_OS_HORIZON)
+
 #else
   entry = readdir (dir->dirp);
   while (entry 
@@ -278,6 +291,9 @@ g_dir_rewind (GDir *dir)
   
 #ifdef G_OS_WIN32
   _wrewinddir (dir->wdirp);
+
+#elif defined(G_OS_HORIZON)
+
 #else
   rewinddir (dir->dirp);
 #endif
@@ -296,6 +312,9 @@ g_dir_close (GDir *dir)
 
 #ifdef G_OS_WIN32
   _wclosedir (dir->wdirp);
+
+#elif defined(G_OS_HORIZON)
+  
 #else
   closedir (dir->dirp);
 #endif

@@ -33,7 +33,9 @@ test_semantics (void)
   gint i;
 
   /* prevent the test from deadlocking */
+#ifndef G_OS_HORIZON
   alarm (60);
+#endif
 
   wakeup = g_wakeup_new ();
   g_assert (!check_signaled (wakeup));
@@ -68,7 +70,9 @@ test_semantics (void)
   g_wakeup_free (wakeup);
 
   /* cancel the alarm */
+#ifndef G_OS_HORIZON
   alarm (0);
+#endif
 }
 
 struct token
@@ -214,7 +218,9 @@ test_threaded (void)
   gint i;
 
   /* make sure we don't block forever */
+#ifndef G_OS_HORIZON
   alarm (60);
+#endif
 
   /* simple mainloop test based on GWakeup.
    *
@@ -254,7 +260,9 @@ test_threaded (void)
   g_wakeup_free (last_token_wakeup);
 
   /* cancel alarm */
+#ifndef G_OS_HORIZON
   alarm (0);
+#endif
 }
 
 int

@@ -43,6 +43,15 @@
 #define LINEEND "\n"
 #endif
 
+#ifdef G_OS_HORIZON
+int     pipe (int __fildes[2])
+{
+return 0;
+}
+#endif
+
+
+
 /* MinGW builds are likely done using a BASH-style shell, so run the
  * normal script there, as on non-Windows builds, as it is more likely
  * that one will run 'make check' in such shells to test the code
@@ -235,6 +244,9 @@ test_spawn_async_with_fds (void)
 #ifdef G_OS_UNIX
               g_unix_open_pipe (test_pipe[j], FD_CLOEXEC, &error);
               g_assert_no_error (error);
+
+#elif defined(G_OS_HORIZON)
+              // TODO: implement
 #else
               g_assert_cmpint (_pipe (test_pipe[j], 4096, _O_BINARY), >=, 0);
 #endif

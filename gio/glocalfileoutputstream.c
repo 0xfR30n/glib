@@ -59,6 +59,11 @@
 #endif
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif

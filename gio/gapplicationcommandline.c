@@ -291,6 +291,9 @@ g_application_command_line_real_get_stdin (GApplicationCommandLine *cmdline)
 {
 #ifdef G_OS_UNIX
   return g_unix_input_stream_new (0, FALSE);
+#elif defined(G_OS_HORIZON)
+  // TODO: implement
+  return NULL;
 #else
   return g_win32_input_stream_new (GetStdHandle (STD_INPUT_HANDLE), FALSE);
 #endif

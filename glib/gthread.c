@@ -1091,6 +1091,10 @@ g_get_num_processors (void)
 
   if (count > 0)
     return count;
+
+#elif defined(G_OS_HORIZON)
+    return 1;
+    
 #elif defined(_SC_NPROCESSORS_ONLN)
   {
     int count;

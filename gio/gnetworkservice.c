@@ -365,6 +365,10 @@ g_network_service_fallback_targets (GNetworkService *srv)
   struct servent *entry;
   guint16 port;
 
+#ifdef G_OS_HORIZON
+  return NULL;
+#else 
+
   entry = getservbyname (srv->priv->service, "tcp");
   port = entry ? g_ntohs (entry->s_port) : 0;
 #ifdef HAVE_ENDSERVENT
@@ -376,6 +380,7 @@ g_network_service_fallback_targets (GNetworkService *srv)
 
   target = g_srv_target_new (srv->priv->domain, port, 0, 0);
   return g_list_append (NULL, target);
+#endif
 }
 
 #define G_TYPE_NETWORK_SERVICE_ADDRESS_ENUMERATOR (_g_network_service_address_enumerator_get_type ())

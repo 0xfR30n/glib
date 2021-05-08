@@ -38,6 +38,11 @@
 #include <io.h>
 #endif /* G_OS_WIN32 */
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #ifndef S_ISLNK
 #define S_ISLNK(x) 0
 #endif
@@ -442,6 +447,11 @@ g_file_test (const gchar *filename,
     }
 
   return FALSE;
+#elif defined(G_OS_HORIZON)
+
+  // TODO:
+  return FALSE;
+
 #else
   if ((test & G_FILE_TEST_EXISTS) && (access (filename, F_OK) == 0))
     return TRUE;

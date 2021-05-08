@@ -66,7 +66,7 @@ glib_tests = {
   },
   'pattern' : {},
   'private' : {},
-  'protocol' : {},
+#  'protocol' : {},
   'queue' : {},
   'rand' : {},
   'rcbox' : {},
@@ -91,9 +91,9 @@ glib_tests = {
   'slice' : {},
   'slist' : {},
   'sort' : {},
-  'spawn-multithreaded' : {},
-  'spawn-path-search' : {},
-  'spawn-singlethread' : {},
+#  'spawn-multithreaded' : {},
+#  'spawn-path-search' : {},
+#  'spawn-singlethread' : {},
   'strfuncs' : {},
   'string' : {},
   'strvbuilder' : {},
@@ -153,6 +153,10 @@ if host_machine.system() == 'windows'
   glib_tests += {
     'win32' : {},
   }
+  
+elif host_system == 'horizon'
+  # TODO: complete with 3DS tests
+
 else
   glib_tests += {
     'include' : {},

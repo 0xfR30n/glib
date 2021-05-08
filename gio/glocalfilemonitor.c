@@ -780,6 +780,9 @@ g_local_file_monitor_start (GLocalFileMonitor *local_monitor,
 #ifdef G_OS_WIN32
       /*claim everything was mounted */
       local_monitor->was_mounted = TRUE;
+
+#elif defined(G_OS_HORIZON)
+      // TODO:
 #else
       GUnixMountEntry *mount;
 

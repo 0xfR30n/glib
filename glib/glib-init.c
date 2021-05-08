@@ -65,12 +65,15 @@ typedef enum {
     TEST_INT32_MIN = G_MININT32,
     TEST_INT32_MAX = G_MAXINT32
 } TestInt;
+
+#if !defined(_3DS)
 G_STATIC_ASSERT (sizeof (TestChar) == sizeof (int));
 G_STATIC_ASSERT (sizeof (TestShort) == sizeof (int));
 G_STATIC_ASSERT (sizeof (TestInt) == sizeof (int));
 G_STATIC_ASSERT (G_ALIGNOF (TestChar) == G_ALIGNOF (int));
 G_STATIC_ASSERT (G_ALIGNOF (TestShort) == G_ALIGNOF (int));
 G_STATIC_ASSERT (G_ALIGNOF (TestInt) == G_ALIGNOF (int));
+#endif
 
 G_STATIC_ASSERT (sizeof (gchar) == 1);
 G_STATIC_ASSERT (sizeof (guchar) == 1);

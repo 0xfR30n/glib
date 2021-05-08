@@ -29,6 +29,11 @@
 
 #include "glibconfig.h"
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #ifdef G_OS_UNIX
 #include <unistd.h>
 #endif

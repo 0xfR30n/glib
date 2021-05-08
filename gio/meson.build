@@ -13,7 +13,7 @@ gnetworking_h_conf = configuration_data()
 
 gnetworking_h_nameser_compat_include = ''
 
-if host_system not in ['windows', 'android']
+if host_system not in ['windows', 'android', 'horizon']
   # Don't check for C_IN on Android since it does not define it in public
   # headers, we define it ourselves wherever necessary
   if not cc.compiles('''#include <sys/types.h>
@@ -34,7 +34,7 @@ endif
 
 network_libs = [ ]
 network_args = [ ]
-if host_system != 'windows'
+if host_system != 'windows' and host_system != 'horizon'
   # res_query()
   res_query_test = '''#include <resolv.h>
                       int main (int argc, char ** argv) {
@@ -359,7 +359,7 @@ gdbus_daemon_sources = [
   gdbus_daemon_generated,
 ]
 
-if host_system != 'windows'
+if host_system != 'windows' and host_system != 'horizon'
   unix_sources = files(
     'gfiledescriptorbased.c',
     'giounix-private.c',
@@ -428,6 +428,10 @@ if host_system != 'windows'
       'gnetworkmonitornm.c',
     )
   endif
+elif host_system == 'horizon'
+  # TODO:
+  appinfo_sources += files('g3dsappinfo.c')
+  appinfo_sources += files('gcontenttype-3ds.c')
 else
   appinfo_sources += files('gwin32appinfo.c')
   contenttype_sources += files('gcontenttype-win32.c')
@@ -1007,7 +1011,7 @@ executable('gdbus', 'gdbus-tool.c',
   link_args : noseh_link_args,
   dependencies : [libgio_dep, libgobject_dep, libgmodule_dep, libglib_dep])
 
-if host_system != 'windows' and not glib_have_cocoa
+if host_system != 'windows' and host_system != 'horizon' and not glib_have_cocoa
   executable('gapplication', 'gapplication-tool.c',
     install : true,
     c_args : gio_c_args,

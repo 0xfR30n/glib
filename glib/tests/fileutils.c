@@ -57,6 +57,14 @@
 #define G_TEST_DIR_MODE (S_IWRITE | S_IREAD)
 #endif
 
+#ifdef G_OS_HORIZON
+#define G_TEST_DIR_MODE 0555
+
+#include <unistd.h>
+#include <sys/unistd.h>
+#include <sys/utime.h>
+#endif
+
 #define S G_DIR_SEPARATOR_S
 
 static void
@@ -1047,8 +1055,11 @@ test_set_contents_full (void)
                 write (fd, "a", 1);
                 g_assert_no_errno (g_fsync (fd));
                 close (fd);
+#if defined(G_OS_HORIZON)
 
-#ifndef G_OS_WIN32
+                // TODO: implement
+
+#elif !defined(G_OS_WIN32)
                 /* Pass an existing symlink to g_file_set_contents_full() to see
                  * what it does. */
                 if (tests[i].existing_file == EXISTING_FILE_SYMLINK)

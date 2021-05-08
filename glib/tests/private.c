@@ -147,6 +147,11 @@ test_private3 (void)
     WaitForSingleObject (thread, INFINITE);
     CloseHandle (thread);
   }
+#elif defined(G_OS_HORIZON)
+  {
+  // TODO: implement
+
+  }
 #else
   {
     pthread_t thread;

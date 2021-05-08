@@ -34,7 +34,11 @@
 #include <fnmatch.h>
 #include <assert.h>
 
+#if defined(_3DS)
+#include <arpa/inet.h>
+#else
 #include <netinet/in.h> /* for ntohl/ntohs */
+#endif
 
 #ifdef HAVE_MMAP
 #include <sys/mman.h>

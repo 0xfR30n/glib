@@ -20,7 +20,7 @@ tests = {
   'testgdate' : {},
   'datetime' : {},
   'bit-test' : {},
-  'child-test' : {},
+#  'child-test' : {},
   'completion-test' : {},
   'dirname-test' : {},
   'file-test' : {},

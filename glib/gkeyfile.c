@@ -51,6 +51,11 @@
 
 #endif  /* G_OS_WIN23 */
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #include "gconvert.h"
 #include "gdataset.h"
 #include "gerror.h"

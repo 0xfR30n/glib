@@ -60,6 +60,10 @@
 #include <process.h> /* For getpid() */
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#endif
+
 /**
  * SECTION:random_numbers
  * @title: Random Numbers

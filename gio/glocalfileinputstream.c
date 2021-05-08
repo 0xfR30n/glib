@@ -43,6 +43,11 @@
 #include <io.h>
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 struct _GLocalFileInputStreamPrivate {
   int fd;
   guint do_close : 1;

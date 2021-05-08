@@ -90,6 +90,11 @@
 #endif
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #include "glocalfileinfo.h"
 #include "gioerror.h"
 #include "gthemedicon.h"
@@ -923,6 +928,10 @@ get_access_rights (GFileAttributeMatcher *attribute_matcher,
 	{
 #ifdef G_OS_WIN32
 	  writable = TRUE;
+    
+#elif defined(G_OS_HORIZON)
+    // FIXME:
+
 #else
 	  if (parent_info->is_sticky)
 	    {
@@ -1097,7 +1106,7 @@ set_info_from_stat (GFileInfo             *info,
     }
 }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 
 static char *
 make_valid_utf8 (const char *name)
@@ -1274,6 +1283,8 @@ lookup_gid_name (gid_t gid)
 
 #if defined (HAVE_GETGRGID_R)
   getgrgid_r (gid, &gbuf, buffer, sizeof(buffer), &gbufp);
+#elif defined(G_OS_HORIZON)
+  gbufp = NULL;
 #else
   gbufp = getgrgid (gid);
 #endif
@@ -1349,7 +1360,7 @@ get_content_type (const char          *basename,
 
       content_type = g_content_type_guess (basename, NULL, 0, &result_uncertain);
       
-#if !defined(G_OS_WIN32) && !defined(HAVE_COCOA)
+#if !defined(G_OS_WIN32) && !defined(HAVE_COCOA) && !defined(G_OS_HORIZON)
       if (!fast && result_uncertain && path != NULL)
 	{
 	  guchar sniff_buffer[4096];
@@ -2026,6 +2037,8 @@ _g_local_file_info_get (const char             *basename,
       
 #ifdef G_OS_WIN32
       win32_get_file_user_info (path, NULL, &name, NULL);
+#elif defined(G_OS_HORIZON)
+      //TODO
 #else
       if (stat_ok)
         name = get_username_from_uid (_g_stat_uid (&statbuf));
@@ -2041,6 +2054,8 @@ _g_local_file_info_get (const char             *basename,
       char *name = NULL;
 #ifdef G_OS_WIN32
       win32_get_file_user_info (path, NULL, NULL, &name);
+#elif defined(G_OS_HORIZON)
+      // TODO
 #else
       if (stat_ok)
         name = get_realname_from_uid (_g_stat_uid (&statbuf));
@@ -2056,6 +2071,8 @@ _g_local_file_info_get (const char             *basename,
       char *name = NULL;
 #ifdef G_OS_WIN32
       win32_get_file_user_info (path, &name, NULL, NULL);
+#elif defined(G_OS_HORIZON)
+      // TODO
 #else
       if (stat_ok)
         name = get_groupname_from_gid (_g_stat_gid (&statbuf));
@@ -2838,7 +2855,7 @@ _g_local_file_info_set_attributes  (char                 *filename,
 #if defined (HAVE_UTIMES) || defined (G_OS_WIN32)
   GFileAttributeValue *mtime, *mtime_usec, *atime, *atime_usec;
 #endif
-#if defined (G_OS_UNIX) || defined (G_OS_WIN32)
+#if defined (G_OS_UNIX) || defined (G_OS_WIN32) || defined(G_OS_HORIZON)
   GFileAttributeStatus status;
 #endif
   gboolean res;

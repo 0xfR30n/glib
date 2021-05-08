@@ -119,7 +119,7 @@ GLIB_DEPRECATED_IN_2_32
 void     g_thread_foreach      (GFunc             thread_func,
                                 gpointer          user_data);
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 #include <sys/types.h>
 #include <pthread.h>
 #endif
@@ -129,7 +129,7 @@ void     g_thread_foreach      (GFunc             thread_func,
 typedef struct
 {
   GMutex *mutex;
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   /* only for ABI compatibility reasons */
   pthread_mutex_t unused;
 #endif
@@ -160,6 +160,8 @@ struct _GStaticRecMutex
   union {
 #ifdef G_OS_WIN32
     void *owner;
+#elif defined(G_OS_HORIZON)
+    // TODO:
 #else
     pthread_t owner;
 #endif

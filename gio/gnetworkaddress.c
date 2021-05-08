@@ -486,7 +486,12 @@ g_network_address_parse (const gchar  *host_and_port,
         {
           struct servent *entry;
 
+#ifdef G_OS_HORIZON
+          entry = NULL;
+#else
           entry = getservbyname (port, "tcp");
+#endif
+
           if (entry == NULL)
             {
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
@@ -499,7 +504,11 @@ g_network_address_parse (const gchar  *host_and_port,
               return NULL;
             }
 
+#ifdef G_OS_HORIZON
+          portnum = 0;
+#else
           portnum = g_ntohs (entry->s_port);
+#endif
 
 #ifdef HAVE_ENDSERVENT
           endservent ();

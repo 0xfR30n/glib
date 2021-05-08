@@ -30,6 +30,49 @@
 #include <iphlpapi.h>
 #undef interface
 
+#elif defined(G_OS_HORIZON)
+
+#include <3ds/types.h>
+
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
+#include <netdb.h>
+
+struct in6_addr
+{
+	uint8_t s6_addr[16];
+};
+
+struct sockaddr_in6
+{
+    sa_family_t     sin6_family;
+    in_port_t       sin6_port;
+    struct in6_addr sin6_addr;
+    u32             sin6_flowinfo; // Not confirmed
+    u32             sin6_scope_id; // Not confirmed
+};
+
+#define	IN_CLASSD(a)		((((long int) (a)) & 0xf0000000) == 0xe0000000)
+#define	IN_MULTICAST(a)		IN_CLASSD(a)
+#define	IN_MULTICAST_NET	0xe0000000
+
+#define INET6_ADDRSTRLEN 46
+
+# define IN6_IS_ADDR_V4MAPPED(a) FALSE
+
+#define SOCK_RDM 3
+#define SOCK_RAW 4
+#define SOCK_SEQPACKET 6
+#define SOCK_DCCP 10
+
+#define SOMAXCONN        128
+
 #else /* !G_OS_WIN32 */
 
 #include <sys/types.h>

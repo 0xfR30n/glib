@@ -615,7 +615,7 @@ g_socket_connection_factory_register_type (GType         g_type,
 static void
 init_builtin_types (void)
 {
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   g_type_ensure (G_TYPE_UNIX_CONNECTION);
 #endif
   g_type_ensure (G_TYPE_TCP_CONNECTION);

@@ -34,6 +34,10 @@
 #include <process.h>
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#endif
+
 #include <stdio.h>              /* fputs */
 
 #include "gslice.h"
@@ -451,6 +455,9 @@ g_slice_init_nomessage (void)
     GetSystemInfo (&system_info);
     sys_page_size = system_info.dwPageSize;
   }
+
+#elif defined(G_OS_HORIZON)
+  sys_page_size = 0x1000;
 #else
   sys_page_size = sysconf (_SC_PAGESIZE); /* = sysconf (_SC_PAGE_SIZE); = getpagesize(); */
 #endif

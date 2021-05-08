@@ -225,6 +225,8 @@ if host_system == 'windows'
 elif host_system == 'cygwin'
   glib_os = '''#define G_OS_UNIX
 #define G_WITH_CYGWIN'''
+elif host_system == 'horizon'
+  glib_os = '#define G_OS_HORIZON'
 else
   glib_os = '#define G_OS_UNIX'
 endif
@@ -314,12 +316,16 @@ headers = [
   'sys/vfstab.h',
   'sys/vmount.h',
   'sys/wait.h',
-  'termios.h',
   'unistd.h',
   'values.h',
   'wchar.h',
   'xlocale.h',
 ]
+
+# devkitARM includes termios but not exactly for the 3DS
+if host_system != 'horizon'
+  headers += ['termios.h']
+endif
 
 foreach h : headers
   if cc.has_header(h)
@@ -1718,6 +1724,10 @@ elif has_winsock2
   poll_includes = '''
       #define _WIN32_WINNT @0@
       #include <winsock2.h>'''.format(glib_conf.get('_WIN32_WINNT'))
+elif host_system == 'horizon'
+  poll_includes = '''
+      #include <poll.h>
+      #include <sys/types.h>'''
 else
   # FIXME?
   error('FIX POLL* defines')
@@ -1732,7 +1742,7 @@ poll_defines = [
   [ 'POLLNVAL', 'g_pollnval', 32 ],
 ]
 
-if has_syspoll and has_systypes
+if has_syspoll and has_systypes or host_system == 'horizon'
   foreach d : poll_defines
     val = cc.compute_int(d[0], prefix: poll_includes)
     glibconfig_conf.set(d[1], val)
@@ -1775,6 +1785,8 @@ endforeach
 
 if host_system == 'windows'
   have_ipv6 = true
+elif host_system == 'horizon'
+  have_ipv6 = false
 else
   have_ipv6 = cc.has_type('struct in6_addr', prefix: '#include <netinet/in.h>')
 endif
@@ -1837,6 +1849,11 @@ if host_system == 'windows' and not get_option('force_posix_threads')
   threads_implementation = 'win32'
   glibconfig_conf.set('g_threads_impl_def', 'WIN32')
   glib_conf.set('THREADS_WIN32', 1)
+elif host_system == 'horizon'
+  thread_dep = []
+  threads_implementation = '3ds'
+  glibconfig_conf.set('g_threads_impl_def', '3DS')
+  glib_conf.set('THREADS_3DS', 1)
 else
   thread_dep = dependency('threads')
   threads_implementation = 'posix'
@@ -2277,6 +2294,12 @@ elif host_system == 'cygwin'
   win32_ldflags = ['-luser32', '-lkernel32']
 endif
 
+
+if host_system == 'horizon'
+  horizon_deps = [cc.find_library('ctru')]
+  glib_link_flags += ['-specs=3dsx.specs']
+endif
+
 # Tracing: dtrace
 want_dtrace = get_option('dtrace')
 enable_dtrace = false
@@ -2330,7 +2353,12 @@ subdir('gobject')
 subdir('gthread')
 subdir('gmodule')
 subdir('gio')
+
+# FIXME: restore for horizon
+if host_system != 'horizon'
 subdir('fuzzing')
+endif
+
 if build_tests
   subdir('tests')
 endif

@@ -1,0 +1,22 @@
+[binaries]
+c = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc'
+cpp = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-g++'
+ar = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc-ar'
+strip = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-strip'
+pkgconfig = '/opt/devkitpro/portlibs/3ds/bin/arm-none-eabi-pkg-config'
+
+[built-in options]
+c_args = ['-DARM11' ,'-D_3DS','-D__3DS__','-I/opt/devkitpro/portlibs/3ds/include','-I/opt/devkitpro/libctru/include','-march=armv6k','-mtune=mpcore','-mfloat-abi=hard','-mtp=soft','-O2','-mword-relocations','-ffunction-sections','-fdata-sections', '-Wno-declaration-after-statement']
+c_link_args = ['-L/opt/devkitpro/portlibs/3ds/lib','-L/opt/devkitpro/libctru/lib','-lctru', '-lm', '-march=armv6k','-mtune=mpcore','-mfloat-abi=hard','-mtp=soft', '-specs=3dsx.specs']
+
+[host_machine]
+system = 'horizon'
+cpu_family = 'arm'
+cpu = 'arm11mpcore'
+endian = 'little'
+
+[target_machine]
+system = 'horizon'
+cpu_family = 'arm'
+cpu = 'arm11mpcore'
+endian = 'little'

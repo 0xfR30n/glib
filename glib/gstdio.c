@@ -44,10 +44,15 @@
 #include <errno.h>
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #include "gstdio.h"
 #include "gstdioprivate.h"
 
-#if !defined (G_OS_UNIX) && !defined (G_OS_WIN32)
+#if !defined (G_OS_UNIX) && !defined (G_OS_WIN32) && !defined(G_OS_HORIZON)
 #error Please port this to your operating system
 #endif
 
@@ -1125,6 +1130,11 @@ g_creat (const gchar *filename,
 
   errno = save_errno;
   return retval;
+
+#elif defined(G_OS_HORIZON)
+  // TODO
+  return -1;
+
 #else
   return creat (filename, mode);
 #endif

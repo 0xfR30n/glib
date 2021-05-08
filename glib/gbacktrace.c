@@ -35,6 +35,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(_3DS)
+#include <3ds/svc.h>
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -145,7 +149,7 @@ volatile gboolean glib_on_error_halt = TRUE;
 void
 g_on_error_query (const gchar *prg_name)
 {
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(_3DS)
   static const gchar * const query1 = "[E]xit, [H]alt";
   static const gchar * const query2 = ", show [S]tack trace";
   static const gchar * const query3 = " or [P]roceed";
@@ -206,7 +210,7 @@ g_on_error_query (const gchar *prg_name)
 
   /* MessageBox is allowed on UWP apps only when building against
    * the debug CRT, which will set -D_DEBUG */
-#if defined(_DEBUG) || !defined(G_WINAPI_ONLY_APP)
+#if !defined(_3DS) && (defined(_DEBUG) || !defined(G_WINAPI_ONLY_APP))
   {
     WCHAR *caption = NULL;
 
@@ -225,7 +229,13 @@ g_on_error_query (const gchar *prg_name)
   printf ("g_on_error_query called, program '%s' terminating\n",
       (prg_name && *prg_name) ? prg_name : "(null)");
 #endif
+
+#if defined(_3DS)
+  svcExitProcess();
+#else
   _exit(0);
+#endif
+
 #endif
 }
 
@@ -292,6 +302,9 @@ g_on_error_stack_trace (const gchar *prg_name)
       if (WIFEXITED (retval) || WIFSIGNALED (retval))
         break;
     }
+#elif defined(_3DS)
+    svcBreak (USERBREAK_ASSERT);
+    g_abort();
 #else
   if (IsDebuggerPresent ())
     G_BREAKPOINT ();
@@ -315,6 +328,11 @@ stack_trace_sigchld (int signum)
 static void
 stack_trace (const char * const *args)
 {
+#if defined(_3DS)
+  // TODO: implement
+  svcExitProcess();
+#else
+  
   pid_t pid;
   int in_fd[2];
   int out_fd[2];
@@ -324,6 +342,7 @@ stack_trace (const char * const *args)
   int sel, idx, state, line_idx;
   char buffer[BUFSIZE];
   char c;
+
 
   stack_trace_done = FALSE;
   signal (SIGCHLD, stack_trace_sigchld);
@@ -436,6 +455,7 @@ stack_trace (const char * const *args)
   close (out_fd[0]);
   close (out_fd[1]);
   _exit (0);
+#endif /* !_3DS */
 }
 
 #endif /* !G_OS_WIN32 */

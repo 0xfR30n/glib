@@ -36,6 +36,11 @@
 #include "gsocketaddress.h"
 #include "gsrvtarget.h"
 
+#if defined(G_OS_HORIZON)
+#define   EAI_FAIL   -4
+#define   EAI_AGAIN   -3
+#endif
+
 
 G_DEFINE_TYPE (GThreadedResolver, g_threaded_resolver, G_TYPE_RESOLVER)
 
@@ -1011,6 +1016,10 @@ do_lookup_records (GTask         *task,
 #endif
 
 #endif  /* HAVE_RES_NQUERY */
+
+#elif defined(G_OS_HORIZON)
+
+  // TODO: implement
 
 #else
 

@@ -43,6 +43,11 @@
 #include <io.h>		/* For open() and close() prototypes. */
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #include "gmoduleconf.h"
 #include "gstdio.h"
 
@@ -492,7 +497,8 @@ g_module_open (const gchar    *file_name,
   gchar *name = NULL;
   
   SUPPORT_OR_RETURN (NULL);
-  
+
+
   g_rec_mutex_lock (&g_module_global_lock);
 
   if (G_UNLIKELY (!module_debug_initialized))

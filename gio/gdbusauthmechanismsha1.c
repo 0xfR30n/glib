@@ -34,6 +34,11 @@
 #include <io.h>
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #include "gdbusauthmechanismsha1.h"
 #include "gcredentials.h"
 #include "gdbuserror.h"
@@ -994,6 +999,8 @@ mechanism_server_initiate (GDBusAuthMechanism   *mechanism,
       if (g_strcmp0 (initial_response, sid) == 0)
         m->priv->state = G_DBUS_AUTH_MECHANISM_STATE_HAVE_DATA_TO_SEND;
       g_free (sid);
+#elif defined(G_OS_HORIZON)
+      // TODO: implement
 #else
 #error Please implement for your OS
 #endif
@@ -1152,6 +1159,9 @@ mechanism_client_initiate (GDBusAuthMechanism   *mechanism,
 #elif defined (G_OS_WIN32)
   initial_response = _g_dbus_win32_get_user_sid ();
   *out_initial_response_len = strlen (initial_response);
+#elif defined(G_OS_HORIZON)
+  // TODO: implement
+  initial_response = NULL;
 #else
 #error Please implement for your OS
 #endif

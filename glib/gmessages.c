@@ -200,6 +200,11 @@
 #include "gpattern.h"
 #include "gthreadprivate.h"
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #ifdef G_OS_UNIX
 #include <unistd.h>
 #endif
@@ -2853,7 +2858,7 @@ _g_log_writer_fallback (GLogLevelFlags   log_level,
       write_string_sized (stream, field->value, field->length);
     }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   {
     gchar pid_string[FORMAT_UNSIGNED_BUFSIZE];
 
@@ -3053,7 +3058,7 @@ _g_log_fallback_handler (const gchar   *log_domain,
 			 gpointer       unused_data)
 {
   gchar level_prefix[STRING_BUFFER_SIZE];
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   gchar pid_string[FORMAT_UNSIGNED_BUFSIZE];
 #endif
   FILE *stream;
@@ -3069,7 +3074,7 @@ _g_log_fallback_handler (const gchar   *log_domain,
   if (!message)
     message = "(NULL) message";
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   format_unsigned (pid_string, getpid (), 10);
 #endif
 
@@ -3078,7 +3083,7 @@ _g_log_fallback_handler (const gchar   *log_domain,
   else
     write_string (stream, "\n** ");
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   write_string (stream, "(process:");
   write_string (stream, pid_string);
   write_string (stream, "): ");

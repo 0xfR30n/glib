@@ -31,6 +31,11 @@
 #define pipe(fds) _pipe(fds, 4096, _O_BINARY)
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 static const char *argv0;
 
 static void

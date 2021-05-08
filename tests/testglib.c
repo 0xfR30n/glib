@@ -41,6 +41,10 @@
 #include <io.h>			/* For read(), write() etc */
 #endif
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
 
 #define GLIB_TEST_STRING "el dorado "
 #define GLIB_TEST_STRING_5 "el do"

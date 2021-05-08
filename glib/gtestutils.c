@@ -22,6 +22,12 @@
 #include "gfileutils.h"
 
 #include <sys/types.h>
+
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #ifdef G_OS_UNIX
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -1198,10 +1204,12 @@ parse_args (gint    *argc_p,
            * collection programs such as systemd-coredump and abrt.
            */
 #ifdef HAVE_SYS_RESOURCE_H
+#if !defined(_3DS)
           {
             struct rlimit limit = { 0, 0 };
             (void) setrlimit (RLIMIT_CORE, &limit);
           }
+#endif
 #endif
           argv[i] = NULL;
 
@@ -3512,10 +3520,12 @@ g_test_trap_fork (guint64        usec_timeout,
        * collection programs such as systemd-coredump and abrt.
        */
 #ifdef HAVE_SYS_RESOURCE_H
+#if !defined(_3DS)
       {
         struct rlimit limit = { 0, 0 };
         (void) setrlimit (RLIMIT_CORE, &limit);
       }
+#endif
 #endif
 
       return TRUE;

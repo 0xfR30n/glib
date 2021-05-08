@@ -361,6 +361,10 @@ g_find_program_in_path (const gchar *program)
       
       path = "/bin:/usr/bin:.";
     }
+
+#elif defined(_3DS)
+    //TODO implement:
+
 #else
   n = GetModuleFileNameW (NULL, wfilename, MAXPATHLEN);
   if (n > 0 && n < MAXPATHLEN)
@@ -981,7 +985,12 @@ g_get_host_name (void)
       gboolean failed;
       gchar *utmp;
 
-#ifndef G_OS_WIN32
+#if defined(G_OS_HORIZON)
+      
+      // TODO
+      return NULL;
+
+#elif !defined(G_OS_WIN32)
       gsize size;
       /* The number 256 * 256 is taken from the value of _POSIX_HOST_NAME_MAX,
        * which is 255. Since we use _POSIX_HOST_NAME_MAX + 1 (= 256) in the
@@ -1002,6 +1011,9 @@ g_get_host_name (void)
         else
 #ifdef HOST_NAME_MAX
           size = HOST_NAME_MAX + 1;
+#elif defined(G_OS_HORIZON)
+        // TODO: use a consant
+        size = 255;
 #else
           size = _POSIX_HOST_NAME_MAX + 1;
 #endif /* HOST_NAME_MAX */

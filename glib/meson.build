@@ -332,6 +332,9 @@ if host_system == 'windows'
   if cc.get_id() == 'msvc' or cc.get_id() == 'clang-cl'
     glib_sources += files('dirent/wdirent.c')
   endif
+elif host_system == 'horizon'
+  glib_sources += files('glib-3ds.c', 'gspawn-3ds.c', 'gio3ds.c')
+  platform_deps = horizon_deps
 else
   glib_sources += files('glib-unix.c', 'gspawn.c', 'giounix.c')
   platform_deps = []
@@ -433,6 +436,9 @@ if host_system == 'windows'
       include_directories : configinc,
       dependencies : [libglib_dep])
   endif
+elif host_system == 'horizon'
+  # implement gtester?
+  
 else
   gtester = executable('gtester', 'gtester.c',
     install : true,

@@ -104,6 +104,17 @@
 #include "giowin32-priv.h"
 #endif
 
+#ifdef G_OS_HORIZON
+#include <gio/gunixoutputstream.h>
+#include <gio/gfiledescriptorbased.h>
+#include <gio/ginitable.h>
+#include <gio/gtask.h>
+#include <gstdio.h>
+
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -187,6 +198,9 @@ platform_input_stream_from_spawn_fd (gint fd)
 
 #ifdef G_OS_UNIX
   return g_unix_input_stream_new (fd, TRUE);
+#elif defined(G_OS_HORIZON)
+  // TODO: implement
+  return NULL;
 #else
   return g_win32_input_stream_new_from_fd (fd, TRUE);
 #endif
@@ -200,6 +214,9 @@ platform_output_stream_from_spawn_fd (gint fd)
 
 #ifdef G_OS_UNIX
   return g_unix_output_stream_new (fd, TRUE);
+#elif defined(G_OS_HORIZON)
+  // TODO: implement
+  return NULL;
 #else
   return g_win32_output_stream_new_from_fd (fd, TRUE);
 #endif
@@ -1040,6 +1057,8 @@ g_subprocess_force_exit (GSubprocess *subprocess)
 
 #ifdef G_OS_UNIX
   g_subprocess_dispatch_signal (subprocess, SIGKILL);
+#elif defined(G_OS_HORIZON)
+  // TODO:
 #else
   TerminateProcess (subprocess->pid, 1);
 #endif
@@ -1097,6 +1116,9 @@ g_subprocess_get_successful (GSubprocess *subprocess)
 
 #ifdef G_OS_UNIX
   return WIFEXITED (subprocess->status) && WEXITSTATUS (subprocess->status) == 0;
+#elif defined(G_OS_HORIZON)
+  // TODO:
+  return FALSE;
 #else
   return subprocess->status == 0;
 #endif
@@ -1126,6 +1148,9 @@ g_subprocess_get_if_exited (GSubprocess *subprocess)
 
 #ifdef G_OS_UNIX
   return WIFEXITED (subprocess->status);
+#elif defined(G_OS_HORIZON)
+  // TODO:
+  return FALSE;
 #else
   return TRUE;
 #endif
@@ -1158,6 +1183,9 @@ g_subprocess_get_exit_status (GSubprocess *subprocess)
   g_return_val_if_fail (WIFEXITED (subprocess->status), 1);
 
   return WEXITSTATUS (subprocess->status);
+#elif defined(G_OS_HORIZON)
+  // TODO: impl
+  return 0;
 #else
   return subprocess->status;
 #endif
@@ -1186,6 +1214,9 @@ g_subprocess_get_if_signaled (GSubprocess *subprocess)
 
 #ifdef G_OS_UNIX
   return WIFSIGNALED (subprocess->status);
+#elif defined(G_OS_HORIZON)
+  // TODO:
+  return FALSE;
 #else
   return FALSE;
 #endif
@@ -1217,6 +1248,8 @@ g_subprocess_get_term_sig (GSubprocess *subprocess)
   g_return_val_if_fail (WIFSIGNALED (subprocess->status), 0);
 
   return WTERMSIG (subprocess->status);
+#elif defined(G_OS_HORIZON)
+  return 0;
 #else
   g_critical ("g_subprocess_get_term_sig() called on Windows, where "
               "g_subprocess_get_if_signaled() always returns FALSE...");

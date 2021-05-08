@@ -79,6 +79,8 @@ typedef struct
 
 #ifdef G_OS_WIN32
 #define EXTENSION_PRIORITY 10
+#elif defined(G_OS_HORIZON)
+#define EXTENSION_PRIORITY 10
 #else
 #define EXTENSION_PRIORITY (glib_should_use_portal () && !glib_has_dconf_access_in_sandbox () ? 110 : 10)
 #endif

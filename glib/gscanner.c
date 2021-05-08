@@ -50,6 +50,9 @@
 #ifdef G_OS_WIN32
 #include <io.h>
 #endif
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#endif
 
 
 /**

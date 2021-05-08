@@ -252,6 +252,9 @@ void            g_once_init_leave               (volatile void  *location,
 # define g_once(once, func, arg) g_once_impl ((once), (func), (arg))
 #endif
 
+// TODO: remove condition once it is implemented
+#if !defined(G_OS_HORIZON)
+
 #ifdef __GNUC__
 # define g_once_init_enter(location) \
   (G_GNUC_EXTENSION ({                                               \
@@ -272,6 +275,8 @@ void            g_once_init_leave               (volatile void  *location,
 # define g_once_init_leave(location, result) \
   (g_once_init_leave((location), (gsize) (result)))
 #endif
+
+#endif // !G_OS_HORIZON
 
 GLIB_AVAILABLE_IN_2_36
 guint          g_get_num_processors (void);

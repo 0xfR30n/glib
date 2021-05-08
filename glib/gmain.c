@@ -90,6 +90,10 @@
 #include "gthreadprivate.h"
 #include "gtrace-private.h"
 
+#ifdef G_OS_HORIZON
+#include <3ds.h>
+#endif
+
 #ifdef G_OS_WIN32
 #include "gwin32.h"
 #endif
@@ -444,7 +448,7 @@ static void block_source (GSource *source);
 
 static GMainContext *glib_worker_context;
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 
 
 /* UNIX signals work by marking one of these variables then waking the
@@ -485,7 +489,7 @@ GSourceFuncs g_unix_signal_funcs =
   g_unix_signal_watch_finalize,
   NULL, NULL
 };
-#endif /* !G_OS_WIN32 */
+#endif /* !G_OS_WIN32 && !G_OS_HORIZON */
 G_LOCK_DEFINE_STATIC (main_context_list);
 static GSList *main_context_list = NULL;
 
@@ -2818,7 +2822,10 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 gint64
 g_get_real_time (void)
 {
-#ifndef G_OS_WIN32
+#if defined(_3DS)
+  return osGetTime () * 1000 * 1000;
+
+#elif !defined(G_OS_WIN32)
   struct timeval r;
 
   /* this is required on alpha, there the timeval structs are ints
@@ -2941,6 +2948,15 @@ g_get_monotonic_time (void)
 
   return val;
 }
+
+#elif defined(G_OS_HORIZON)
+
+gint64
+g_get_monotonic_time (void)
+{
+  return osGetTime () * 1000 * 1000;
+}
+
 #else
 gint64
 g_get_monotonic_time (void)
@@ -5241,6 +5257,27 @@ g_child_watch_finalize (GSource *source)
 {
 }
 
+#elif defined(G_OS_HORIZON)
+
+static gboolean
+g_child_watch_prepare (GSource *source,
+           gint    *timeout)
+{
+  *timeout = -1;
+  return FALSE;
+}
+
+static gboolean 
+g_child_watch_check (GSource  *source)
+{
+  return FALSE;
+}
+
+static void
+g_child_watch_finalize (GSource *source)
+{
+}
+
 #else /* G_OS_WIN32 */
 
 static void
@@ -5606,7 +5643,7 @@ g_child_watch_dispatch (GSource    *source,
   return FALSE;
 }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 
 static void
 g_unix_signal_handler (int signum)
@@ -5627,7 +5664,7 @@ g_unix_signal_handler (int signum)
   errno = saved_errno;
 }
 
-#endif /* !G_OS_WIN32 */
+#endif /* !G_OS_WIN32 && !G_OS_HORIZON */
 
 /**
  * g_child_watch_source_new:
@@ -5677,7 +5714,7 @@ g_child_watch_source_new (GPid pid)
   GSource *source;
   GChildWatchSource *child_watch_source;
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   g_return_val_if_fail (pid > 0, NULL);
 #endif
 
@@ -5694,6 +5731,11 @@ g_child_watch_source_new (GPid pid)
   child_watch_source->poll.events = G_IO_IN;
 
   g_source_add_poll (source, &child_watch_source->poll);
+
+#elif defined(_3DS)
+  // TODO: complete
+  return source;
+
 #else /* G_OS_WIN32 */
   G_LOCK (unix_signal_lock);
   ref_unix_signal_handler_unlocked (SIGCHLD);
@@ -5756,7 +5798,7 @@ g_child_watch_add_full (gint            priority,
   guint id;
   
   g_return_val_if_fail (function != NULL, 0);
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(_3DS)
   g_return_val_if_fail (pid > 0, 0);
 #endif
 

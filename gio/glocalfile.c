@@ -71,6 +71,11 @@
 
 #include "glib-private.h"
 
+#ifdef G_OS_HORIZON
+#include <unistd.h>
+#include <sys/unistd.h>
+#endif
+
 #ifdef G_OS_WIN32
 #include <windows.h>
 #include <io.h>
@@ -112,7 +117,7 @@ G_DEFINE_TYPE_WITH_CODE (GLocalFile, g_local_file, G_TYPE_OBJECT,
 
 static char *find_mountpoint_for (const char *file, dev_t dev, gboolean resolve_basename_symlink);
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 static gboolean is_remote_fs_type (const gchar *fsname);
 #endif
 
@@ -735,7 +740,7 @@ get_fs_type (long f_type)
 }
 #endif
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 
 G_LOCK_DEFINE_STATIC(mount_info_hash);
 static GHashTable *mount_info_hash = NULL;
@@ -927,7 +932,7 @@ g_local_file_query_filesystem_info (GFile         *file,
   GFileInfo *info;
   int statfs_result = 0;
   gboolean no_size;
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32)
   const char *fstype;
 #ifdef USE_STATFS
   guint64 block_size;
@@ -966,7 +971,7 @@ g_local_file_query_filesystem_info (GFile         *file,
        statfs_buffer.f_type == 0x65735546))
     no_size = TRUE;
 #endif  /* __linux__ */
-  
+
 #elif defined(USE_STATVFS)
   statfs_result = statvfs (local->filename, &statfs_buffer);
   block_size = statfs_buffer.f_frsize; 
@@ -1044,7 +1049,7 @@ g_local_file_query_filesystem_info (GFile         *file,
 #endif /* G_OS_WIN32 */
     }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 #ifdef USE_STATFS
 #if defined(HAVE_STRUCT_STATFS_F_FSTYPENAME)
   fstype = statfs_buffer.f_fstypename;
@@ -1071,14 +1076,16 @@ g_local_file_query_filesystem_info (GFile         *file,
   if (g_file_attribute_matcher_matches (attribute_matcher,
 					G_FILE_ATTRIBUTE_FILESYSTEM_READONLY))
     {
-#ifdef G_OS_WIN32
+#if defined(G_OS_HORIZON)
+      // TODO:
+#elif defined(G_OS_WIN32)
       get_filesystem_readonly (info, local->filename);
 #else
       get_mount_info (info, local->filename, attribute_matcher);
 #endif /* G_OS_WIN32 */
     }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   if (g_file_attribute_matcher_matches (attribute_matcher,
                                         G_FILE_ATTRIBUTE_FILESYSTEM_REMOTE))
     g_file_info_set_attribute_boolean (info, G_FILE_ATTRIBUTE_FILESYSTEM_REMOTE,
@@ -1097,13 +1104,16 @@ g_local_file_find_enclosing_mount (GFile         *file,
 {
   GLocalFile *local = G_LOCAL_FILE (file);
   GStatBuf buf;
-  char *mountpoint;
+  char *mountpoint = NULL;
   GMount *mount;
 
   if (g_lstat (local->filename, &buf) != 0)
     goto error;
 
+// FIXME:
+#if !defined(G_OS_HORIZON)
   mountpoint = find_mountpoint_for (local->filename, buf.st_dev, FALSE);
+#endif
   if (mountpoint == NULL)
     goto error;
 
@@ -1496,7 +1506,7 @@ g_local_file_delete (GFile         *file,
   return TRUE;
 }
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
 
 static char *
 strip_trailing_slashes (const char *path)
@@ -2300,7 +2310,28 @@ g_local_file_trash (GFile         *file,
   
   return TRUE;
 }
+
+#elif defined(G_OS_HORIZON)
+
+// TODO:implement
+
+gboolean
+_g_local_file_has_trash_dir (const char *dirname, dev_t dir_dev)
+{
+  return FALSE;
+}
+
+static gboolean
+g_local_file_trash (GFile         *file,
+        GCancellable  *cancellable,
+        GError       **error)
+{
+  return NULL;
+}
+
+
 #else /* G_OS_WIN32 */
+
 gboolean
 _g_local_file_has_trash_dir (const char *dirname, dev_t dir_dev)
 {
@@ -2558,6 +2589,14 @@ g_local_file_is_nfs_home (const gchar *filename)
   return FALSE;
 }
 
+#elif defined(G_OS_HORIZON)
+
+gboolean
+g_local_file_is_nfs_home (const gchar *filename)
+{
+  return FALSE;
+}
+
 #else
 
 static gboolean
@@ -2743,7 +2782,7 @@ g_local_file_measure_size_of_file (gint           parent_fd,
   if (g_cancellable_set_error_if_cancelled (state->cancellable, error))
     return FALSE;
 
-#if defined (AT_FDCWD)
+#if defined (AT_FDCWD) && !defined(G_OS_HORIZON)
   if (g_local_file_fstatat (parent_fd, name->data, AT_SYMLINK_NOFOLLOW,
                             G_LOCAL_FILE_STAT_FIELD_BASIC_STATS,
                             G_LOCAL_FILE_STAT_FIELD_ALL & (~G_LOCAL_FILE_STAT_FIELD_ATIME),
@@ -2752,13 +2791,13 @@ g_local_file_measure_size_of_file (gint           parent_fd,
       int errsv = errno;
       return g_local_file_measure_size_error (state->flags, errsv, name, error);
     }
-#elif defined (HAVE_LSTAT) || !defined (G_OS_WIN32)
+#elif defined (HAVE_LSTAT) || (!defined (G_OS_WIN32) && !defined(G_OS_HORIZON))
   if (g_lstat (name->data, &buf) != 0)
     {
       int errsv = errno;
       return g_local_file_measure_size_error (state->flags, errsv, name, error);
     }
-#else /* !AT_FDCWD && !HAVE_LSTAT && G_OS_WIN32 */
+#elif defined(G_OS_WIN32) /* !AT_FDCWD && !HAVE_LSTAT && G_OS_WIN32 */
   if (GLIB_PRIVATE_CALL (g_win32_lstat_utf8) (name->data, &buf) != 0)
     {
       int errsv = errno;
@@ -2838,6 +2877,8 @@ g_local_file_measure_size_of_file (gint           parent_fd,
       if (g_cancellable_set_error_if_cancelled (state->cancellable, error))
         return FALSE;
 
+#if !defined(G_OS_HORIZON)
+
 #ifdef AT_FDCWD
 #ifdef HAVE_OPEN_O_DIRECTORY
       dir_fd = openat (parent_fd, name->data, O_RDONLY|O_DIRECTORY);
@@ -2848,6 +2889,9 @@ g_local_file_measure_size_of_file (gint           parent_fd,
       if (dir_fd < 0)
         return g_local_file_measure_size_error (state->flags, errsv, name, error);
 #endif
+
+#endif /* G_OS_HORIZON */
+
 
       if (!g_local_file_measure_size_of_contents (dir_fd, name, state, error))
         return FALSE;
@@ -2867,7 +2911,8 @@ g_local_file_measure_size_of_contents (gint           fd,
   GDir *dir;
   gint saved_errno;
 
-#ifdef AT_FDCWD
+// TODO: review this condition
+#if defined(AT_FDCWD) && !defined(G_OS_HORIZON)
   {
     /* If this fails, we want to preserve the errno from fdopendir() */
     DIR *dirp;

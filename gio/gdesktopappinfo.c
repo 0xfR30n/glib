@@ -2549,7 +2549,7 @@ static gboolean
 prepend_terminal_to_vector (int    *argc,
                             char ***argv)
 {
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   char **real_argv;
   int real_argc;
   int i, j;
