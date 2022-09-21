@@ -109,35 +109,53 @@ g_wakeup_free (GWakeup *wakeup)
 
 #elif defined(G_OS_HORIZON)
 
-// TODO: implement
+#include <3ds.h>
+
+#ifdef GLIB_COMPILATION
+#include "gtypes.h"
+#include "gpoll.h"
+#include "giochannel.h"
+#else
+#include <glib.h>
+#endif
+
+#include <stdio.h>
 
 GWakeup *
 g_wakeup_new (void)
 {
-  return NULL;
+  Handle h;
+  svcCreateEvent (&h, RESET_STICKY);
+  return (GWakeup *) GSIZE_TO_POINTER (h);
 }
 
 void
-g_wakeup_get_pollfd (GWakeup *wakeup,
-                     GPollFD *poll_fd)
+g_wakeup_get_pollfd (GWakeup * wakeup, GPollFD * poll_fd)
 {
+  poll_fd->fd = (gintptr) wakeup;
+  poll_fd->events = G_IO_IN;
 }
 
 void
-g_wakeup_acknowledge (GWakeup *wakeup)
+g_wakeup_acknowledge (GWakeup * wakeup)
 {
+  Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  svcClearEvent (h);
 }
 
 void
-g_wakeup_signal (GWakeup *wakeup)
+g_wakeup_signal (GWakeup * wakeup)
 {
+  Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  svcSignalEvent (h);
 }
 
 void
-g_wakeup_free (GWakeup *wakeup)
+g_wakeup_free (GWakeup * wakeup)
 {
+  Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  svcCloseHandle (h);
 }
-
 
 #else
 
