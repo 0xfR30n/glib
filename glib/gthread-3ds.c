@@ -347,20 +347,87 @@ g_cond_wait_until (GCond * cond, GMutex * mutex, gint64 end_time)
 }
 
 
+#include <stdio.h>
+
+typedef struct
+{
+  guint32 idx;
+  gpointer data;
+} GPrivate3DS;
+
+static GPrivate3DS *
+g_private_3ds_get (GPrivate * key)
+{
+  GPrivate3DS *priv = key->p;
+
+  if (G_UNLIKELY (priv == NULL)) {
+    u32 i;
+    u32 *tlsbuf = (u32 *) getThreadStaticBuffers ();
+
+    for (i = 0; i < 32; i++) {
+      if (tlsbuf[i] == NULL)
+        break;
+    }
+
+    if (i == 32) {
+      // no more space !
+      printf ("NO MORE SPACE?!\n");
+      return NULL;
+      // g_abort ();
+    }
+
+    priv = malloc (sizeof (GPrivate3DS));
+    priv->idx = i;
+    priv->data = NULL;
+
+    tlsbuf[i] = (u32 *) priv;
+    key->p = (gpointer) priv;
+  }
+
+  return priv;
+}
+
+static void
+g_private_3ds_free (GPrivate3DS * priv)
+{
+  if (G_UNLIKELY (priv == NULL))
+    return;
+
+  u32 *tlsbuf = (u32 *) getThreadLocalStorage ();
+  g_assert (priv->idx >= START_IDX && priv->idx < END_IDX);
+  tlsbuf[priv->idx] = NULL;
+  free (priv);
+}
+
 gpointer
 g_private_get (GPrivate * key)
 {
-  return NULL;
+  (void) g_private_3ds_get;
+  (void) g_private_3ds_free;
+
+  GPrivate3DS *priv = g_private_3ds_get (key);
+  return priv->data;
+  // return NULL;
 }
 
 void
 g_private_set (GPrivate * key, gpointer value)
 {
+  GPrivate3DS *priv = g_private_3ds_get (key);
+  priv->data = value;
 }
 
 void
 g_private_replace (GPrivate * key, gpointer value)
 {
+  GPrivate3DS *priv = g_private_3ds_get (key);
+  gpointer old;
+
+  old = priv->data;
+  priv->data = value;
+
+  if (old && key->notify)
+    key->notify (old);
 }
 
 void
