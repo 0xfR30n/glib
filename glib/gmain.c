@@ -2822,7 +2822,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 gint64
 g_get_real_time (void)
 {
-#if defined(_3DS)
+#if defined(G_OS_HORIZON)
   return osGetTime () * 1000 * 1000;
 
 #elif !defined(G_OS_WIN32)
@@ -5263,6 +5263,7 @@ static gboolean
 g_child_watch_prepare (GSource *source,
            gint    *timeout)
 {
+  g_assert_not_reached();
   *timeout = -1;
   return FALSE;
 }
@@ -5270,12 +5271,14 @@ g_child_watch_prepare (GSource *source,
 static gboolean 
 g_child_watch_check (GSource  *source)
 {
+  g_assert_not_reached();
   return FALSE;
 }
 
 static void
 g_child_watch_finalize (GSource *source)
 {
+  g_assert_not_reached();
 }
 
 #else /* G_OS_WIN32 */
@@ -5732,8 +5735,8 @@ g_child_watch_source_new (GPid pid)
 
   g_source_add_poll (source, &child_watch_source->poll);
 
-#elif defined(_3DS)
-  // TODO: complete
+#elif defined(G_OS_HORIZON)
+  g_assert_not_reached();
   return source;
 
 #else /* G_OS_WIN32 */
@@ -5798,7 +5801,7 @@ g_child_watch_add_full (gint            priority,
   guint id;
   
   g_return_val_if_fail (function != NULL, 0);
-#if !defined(G_OS_WIN32) && !defined(_3DS)
+#if !defined(G_OS_WIN32) && !defined(G_OS_HORIZON)
   g_return_val_if_fail (pid > 0, 0);
 #endif
 
