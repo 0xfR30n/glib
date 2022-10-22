@@ -124,10 +124,9 @@ g_wakeup_free (GWakeup *wakeup)
 GWakeup *
 g_wakeup_new (void)
 {
-  LightEvent *ev;
-  ev = malloc (sizeof (LightEvent));
-  LightEvent_Init (ev, RESET_STICKY);
-  return (GWakeup *) ev;
+  Handle h;
+  svcCreateEvent (&h, RESET_STICKY);
+  return (GWakeup *) GSIZE_TO_POINTER (h);
 }
 
 void
@@ -140,23 +139,22 @@ g_wakeup_get_pollfd (GWakeup * wakeup, GPollFD * poll_fd)
 void
 g_wakeup_acknowledge (GWakeup * wakeup)
 {
-  LightEvent *ev = (LightEvent *) wakeup;
-  LightEvent_Clear (ev);
+  Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  svcClearEvent (h);
 }
 
 void
 g_wakeup_signal (GWakeup * wakeup)
 {
-  LightEvent *ev = (LightEvent *) wakeup;
-  LightEvent_Signal (ev);
+  Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  svcSignalEvent (h);
 }
 
 void
 g_wakeup_free (GWakeup * wakeup)
 {
-  LightEvent *ev = (LightEvent *) wakeup;
-  LightEvent_Clear (ev);
-  free (ev);
+  Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  svcCloseHandle (h);
 }
 
 #else
