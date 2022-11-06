@@ -85,7 +85,65 @@
 extern gboolean _g_main_poll_debug;
 #endif
 
-#ifdef HAVE_POLL
+#if defined(G_OS_HORIZON)
+
+#include "gprintf.h"
+#include <3ds.h>
+
+#define MAXIMUM_WAIT_OBJECTS 100
+
+gint
+g_poll (GPollFD *fds,
+  guint    nfds,
+  gint     timeout)
+{
+  gint ret = 0;
+  Handle handles[MAXIMUM_WAIT_OBJECTS];
+  Result res;
+  guint i;
+
+  if (nfds > MAXIMUM_WAIT_OBJECTS) {
+    g_error("Unsupported value of fds: %u", nfds);
+    return -1;
+  }
+
+  if (timeout == -1)
+    timeout = U64_MAX;
+  else
+    timeout = timeout * 1000000;
+
+  for (i = 0;  i < nfds ; i++) {
+    gintptr handle = (gintptr) fds[i].fd;
+    handles[i] = (Handle) handle;
+    // g_print("waiting for %lu...", handles[i]);
+    fds[i].revents = 0;
+  }
+
+  g_print("about to wait for %u handles, timeout: %d", nfds, timeout);
+
+  do {
+    s32 idx = 0;
+    res = svcWaitSynchronizationN (&idx, &handles, (s32) nfds, TRUE, timeout);
+    if (res < 0) {
+      break;
+    }
+
+    g_print ("handle %lu returned, idx: %lu \n", handles[idx], idx);
+
+    fds[idx].revents |= G_IO_IN;
+    ret++;
+  } while (ret < nfds);
+
+  if (res == -1){
+    ret = -1;
+    for (i = 0;  i < nfds ; i++)
+      fds[i].revents = 0;
+  }
+
+  return ret;
+}
+
+#elif defined(HAVE_POLL)
 
 /**
  * g_poll:

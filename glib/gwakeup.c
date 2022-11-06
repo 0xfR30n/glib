@@ -119,19 +119,21 @@ g_wakeup_free (GWakeup *wakeup)
 #include <glib.h>
 #endif
 
-#include <stdio.h>
+#include "gprintf.h"
 
 GWakeup *
 g_wakeup_new (void)
 {
   Handle h;
   svcCreateEvent (&h, RESET_STICKY);
-  return (GWakeup *) GSIZE_TO_POINTER (h);
+  // g_print("created handle: %lu", h);
+  return (GWakeup *) GUINT_TO_POINTER (h);
 }
 
 void
 g_wakeup_get_pollfd (GWakeup * wakeup, GPollFD * poll_fd)
 {
+  // g_print("getting pollfd: %u", GPOINTER_TO_UINT(wakeup));
   poll_fd->fd = (gintptr) wakeup;
   poll_fd->events = G_IO_IN;
 }
@@ -140,6 +142,7 @@ void
 g_wakeup_acknowledge (GWakeup * wakeup)
 {
   Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  // g_print("ack : %lu",h); 
   svcClearEvent (h);
 }
 
@@ -147,6 +150,7 @@ void
 g_wakeup_signal (GWakeup * wakeup)
 {
   Handle h = (Handle) GPOINTER_TO_UINT (wakeup);
+  // g_print("signal: %lu",h); 
   svcSignalEvent (h);
 }
 
